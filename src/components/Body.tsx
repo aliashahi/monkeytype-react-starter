@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { LetterDto, TextDto, WordDto } from "../models/letter.interface";
+import { LetterDto, TextDto } from "../models/letter.interface";
+import Timer from "./Timer";
 
 function Body(probs: any) {
   const text =
@@ -9,20 +10,13 @@ function Body(probs: any) {
      type specimen book.`
       .toLowerCase()
       .replace(/\s+/g, " ");
-  let count = 0;
+
   let t: TextDto = {
-    words: text.split(" ").map<WordDto>((word: string) => {
-      count += word.length;
+    letters: text.split("").map<LetterDto>((letter: string, index: number) => {
       return {
-        letters: word
-          .split("")
-          .map<LetterDto>((letter: string, index2: number) => {
-            return {
-              index: count - word.length + index2,
-              currect: null,
-              letter,
-            };
-          }),
+        index: index,
+        currect: null,
+        letter,
       };
     }),
   };
@@ -32,29 +26,24 @@ function Body(probs: any) {
   const [myCounter, setMyCounter] = useState<number>(0);
   const counterRef = useRef(myCounter);
 
-  const Letter = (letter: LetterDto, index = 0) => {
-    return (
-      <span
-        key={index}
-        className={
-          letter.currect
-            ? "text-main-color"
-            : letter.currect === false
-            ? "text-error-color"
-            : ""
-        }
-      >
-        {letter.letter}
-      </span>
-    );
+  const createLetterClassName = (letter: LetterDto): string => {
+    let class_name = letter.currect
+      ? "text-main-color" + (letter.letter == " " ? " mx-2" : "")
+      : letter.currect === false
+      ? "text-error-color" + (letter.letter == " " ? " mx-2" : "")
+      : "text-sub-color" + (letter.letter == " " ? " mx-2" : "");
+    return class_name;
   };
 
-  const Word = (word: WordDto, id = 0) => {
+  const Letter = (letter: LetterDto, index = 0) => {
     return (
-      <span key={id} className="px-2">
-        {word.letters.map((letter: LetterDto, index: number) => {
-          return Letter(letter, index);
-        })}
+      <span key={index} className="flex">
+        {letter.index === myCounter ? (
+          <div className="h-10 inline-block w-[3px] bg-main-color animate-pulse"></div>
+        ) : (
+          ""
+        )}
+        <span className={createLetterClassName(letter)}>{letter.letter}</span>
       </span>
     );
   };
@@ -62,19 +51,17 @@ function Body(probs: any) {
   const Text = (text: TextDto) => {
     return (
       <div className="w-full flex flex-wrap">
-        {text.words.map((word: WordDto, index: number) => {
-          return Word(word, index);
+        {text.letters.map((letter: LetterDto, index: number) => {
+          return Letter(letter, index);
         })}
       </div>
     );
   };
 
   const getCurrentLetterIndex = (c: number): LetterDto => {
-    for (let i = 0; i < data.words.length; i++) {
-      for (let j = 0; j < data.words[i].letters.length; j++) {
-        if (data.words[i].letters[j].index == c) {
-          return { ...data.words[i].letters[j] };
-        }
+    for (let i = 0; i < data.letters.length; i++) {
+      if (data.letters[i].index == c) {
+        return { ...data.letters[i] };
       }
     }
     return { currect: null, index: -1, letter: "" };
@@ -82,55 +69,54 @@ function Body(probs: any) {
 
   const getupdatedText = (currentLetter: LetterDto): TextDto => {
     let c_data = dataRef.current;
-    let t: TextDto = { words: [] };
-    for (let i = 0; i < c_data.words.length; i++) {
-      let word: WordDto = { letters: [] };
-      for (let j = 0; j < c_data.words[i].letters.length; j++) {
-        if (c_data.words[i].letters[j].index === currentLetter.index)
-          word.letters.push(currentLetter);
-        else word.letters.push(c_data.words[i].letters[j]);
-      }
-      t.words.push(word);
+    let t: TextDto = { letters: [] };
+    for (let i = 0; i < c_data.letters.length; i++) {
+      let letter: LetterDto = { currect: null, index: -1, letter: "" };
+      if (c_data.letters[i].index === currentLetter.index)
+        letter = currentLetter;
+      else letter = c_data.letters[i];
+      t.letters.push(letter);
     }
     return t;
+  };
+
+  const incrementor = () => {
+    counterRef.current++;
+    setMyCounter(counterRef.current);
+  };
+
+  const decrementor = () => {
+    counterRef.current--;
+    setMyCounter(counterRef.current);
+  };
+
+  const updateDataCurrentValue = (
+    currentLetter: LetterDto,
+    currect: boolean | null
+  ) => {
+    dataRef.current = getupdatedText({
+      letter: currentLetter.letter,
+      currect,
+      index: currentLetter.index,
+    });
+    setData(dataRef.current);
   };
 
   const onKeyDown = (event: any) => {
     let currentLetter: LetterDto = getCurrentLetterIndex(counterRef.current);
     if (event.key === "Backspace") {
-      dataRef.current = getupdatedText({
-        letter: currentLetter.letter,
-        currect: null,
-        index: currentLetter.index,
-      });
-      if (counterRef.current != 0)
+      updateDataCurrentValue(currentLetter, null);
+      if (counterRef.current != 0) {
         currentLetter = getCurrentLetterIndex(counterRef.current - 1);
-      counterRef.current--;
-      setMyCounter(counterRef.current);
-      dataRef.current = getupdatedText({
-        letter: currentLetter.letter,
-        currect: null,
-        index: currentLetter.index,
-      });
-      setData(dataRef.current);
+        updateDataCurrentValue(currentLetter, null);
+      }
+      decrementor();
     } else if (currentLetter.letter === event.key) {
-      counterRef.current++;
-      setMyCounter(counterRef.current);
-      dataRef.current = getupdatedText({
-        letter: currentLetter.letter,
-        currect: true,
-        index: currentLetter.index,
-      });
-      setData(dataRef.current);
+      incrementor();
+      updateDataCurrentValue(currentLetter, true);
     } else if (event.key.length == 1) {
-      counterRef.current++;
-      setMyCounter(counterRef.current);
-      dataRef.current = getupdatedText({
-        letter: currentLetter.letter,
-        currect: false,
-        index: currentLetter.index,
-      });
-      setData(dataRef.current);
+      incrementor();
+      updateDataCurrentValue(currentLetter, false);
     }
   };
 
@@ -143,6 +129,7 @@ function Body(probs: any) {
       id="MainContent"
       className="h-[40vh] text-2xl font-medium w-full text-text-color"
     >
+      <Timer />
       {Text(data)}
     </div>
   );

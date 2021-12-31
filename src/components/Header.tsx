@@ -23,11 +23,11 @@ function Header(probs: any) {
   };
   return (
     <header className="w-full h-20 flex flex-nowrap items-center">
-      <span className="w-10 h-6 bg-yellow-400 rounded-lg mx-2"></span>
-      <h1 className="text-text-color text-3xl">monkey type</h1>
+      <span className="w-10 h-6 mt-2 bg-yellow-400 rounded-lg mx-2"></span>
       <ul className="flex flex-nowrap items-center justify-around">
-        <CrownFilled className="p-2 text-gray-200 cursor-pointer hover:text-white hover:scale-110 transition-all" />
-        <InfoCircleFilled className="p-2 text-gray-200 cursor-pointer hover:text-white hover:scale-110 transition-all" />
+        <h1 className="text-text-color text-3xl">monkey type</h1>
+        <CrownFilled className="p-2 pt-4 text-gray-200 cursor-pointer hover:text-white hover:scale-110 transition-all" />
+        <InfoCircleFilled className="p-2 pt-4 text-gray-200 cursor-pointer hover:text-white hover:scale-110 transition-all" />
       </ul>
       <ul className="ml-auto text-right">
         {Line(["punctuation", "numbers"])}

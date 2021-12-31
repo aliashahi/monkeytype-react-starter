@@ -4,10 +4,8 @@ export interface LetterDto {
   currect: boolean | null;
 }
 
-export interface WordDto {
-  letters: LetterDto[];
-}
+// export interface WordDto {}
 
 export interface TextDto {
-  words: WordDto[];
+  letters: LetterDto[];
 }
